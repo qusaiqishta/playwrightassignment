@@ -45,18 +45,18 @@ const selectors = {
   
   // URLs
   urls: {
-    baseUrl: 'https://www.almosafer.com',
-    signUpPage: 'https://www.almosafer.com/en/register?ncr=1',
-    signInPage: 'https://www.almosafer.com/en/signin?ncr=1',
-    profilePage: 'https://www.almosafer.com/en/myaccount/profile',
+    baseUrl: 'https://next-staging.almosafer.com',
+    signUpPage: 'https://next-staging.almosafer.com/en/register?ncr=1',
+    signInPage: 'https://next-staging.almosafer.com/en/signin?ncr=1',
+    profilePage: 'https://next-staging.almosafer.com/en/myaccount/profile',
   },
   
   // API endpoints
   api: {
-    signUp: 'https://www.almosafer.com/api/myaccount/v4/user/local/signup',
-    signIn: 'https://www.almosafer.com/api/myaccount/v3/auth/token',
-    userProfile: 'https://www.almosafer.com/api/myaccount/v4/user/me',
-    logout: 'https://www.almosafer.com/api/myaccount/v3/auth/revoke',
+    signUp: 'https://next-staging.almosafer.com/api/myaccount/v4/user/local/signup',
+    signIn: 'https://next-staging.almosafer.com/api/myaccount/v3/auth/token',
+    userProfile: 'https://next-staging.almosafer.com/api/myaccount/v4/user/me',
+    logout: 'https://next-staging.almosafer.com/api/myaccount/v3/auth/revoke',
   }
 };
 

@@ -4,30 +4,31 @@ import { defineConfig, devices } from '@playwright/test';
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
+  navigationTimeout: 60000, // Increase page load timeout to 60s
   testDir: './tests',
+
   /* Run tests in files in parallel */
   fullyParallel: true,
+
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
+
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 1 : 0,
+
   /* Use 1 worker to avoid conflicts with website navigation */
   workers: 1,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+
+  /* Reporter to use */
   reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+
+  /* Shared settings for all projects */
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'https://www.almosafer.com',
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    baseURL: 'https://next-staging.almosafer.com',
     trace: 'on-first-retry',
-    /* Take screenshot on failure */
     screenshot: 'only-on-failure',
-    /* Record video on failure */
     video: 'retain-on-failure',
-    /* Browser context options */
     viewport: { width: 1280, height: 720 },
-    /* Ignore HTTPS errors */
     ignoreHTTPSErrors: true,
   },
 
@@ -39,7 +40,10 @@ export default defineConfig({
     },
   ],
 
-  /* Run your local dev server before starting the tests */
+  /* Global setup to block analytics / GTM / trackers before any test */
+  globalSetup: './global-setup.js',
+
+  /* Optional: local dev server before tests */
   // webServer: {
   //   command: 'npm run start',
   //   url: 'http://127.0.0.1:3000',

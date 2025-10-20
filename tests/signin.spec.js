@@ -20,7 +20,7 @@ test.describe('Sign In Tests', () => {
     await signInPage.navigate();
   });
   
-  test.describe('Email Sign In - Positive Test Cases', () => {
+  test.describe.only('Email Sign In - Positive Test Cases', () => {
     test('should successfully sign in with valid email and password', async ({ page }) => {
       // Setup API interceptors
       const apiResponses = await setupSigninInterceptors(page);

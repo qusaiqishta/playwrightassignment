@@ -16,7 +16,7 @@ class SignInPage {
    */
   async navigate() {
     await this.page.goto(selectors.urls.signInPage);
-    await this.page.waitForLoadState('networkidle');
+    // await this.page.waitForLoadState('networkidle');
   }
   
   /**
