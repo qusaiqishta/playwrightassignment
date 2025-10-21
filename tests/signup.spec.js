@@ -6,25 +6,25 @@
 import { test, expect } from '@playwright/test';
 import SignUpPage from '../pages/SignUpPage.js';
 import ProfilePage from '../pages/ProfilePage.js';
-import { setupSignupInterceptors } from '../utils/apiHelpers.js';
+import { setupSignupInterceptors, setupProfileInterceptors } from '../utils/apiHelpers.js';
 import FormValidation from '../utils/formValidation.js';
 import { valid, invalid, existingUser } from '../testData/testData.js';
-import selectors from '../testData/selectors.js';
-
+import selectors, { signUp } from '../testData/selectors.js';
+import SignInPage from '../pages/SignInPage.js';
 test.describe('Sign Up Tests', () => {
   let signUpPage;
   let profilePage;
-  
+  let signInPage
   test.beforeEach(async ({ page }) => {
     signUpPage = new SignUpPage(page);
     profilePage = new ProfilePage(page);
+    signInPage = new SignInPage(page);
     await signUpPage.navigate();
   });
   
   test.describe('Email Sign Up - Positive Test Cases', () => {
     test('should successfully sign up with valid email and password', async ({ page }) => {
       // Setup API interceptors
-      const apiResponses = await setupSignupInterceptors(page);
       
       // Generate test data
       const email = FormValidation.generateRandomEmail();
@@ -52,12 +52,13 @@ test.describe('Sign Up Tests', () => {
       expect(authValidation.isValid).toBe(true);
       
       // Validate API responses
-      expect(apiResponses.signup.status).toBe(200);
-      expect(apiResponses.userProfile.status).toBe(200);
+      const authApiResponse = await setupSignupInterceptors(page);
+      expect(authApiResponse.status).toBe(200);
+      const profileApiResponse = await setupProfileInterceptors(page);
+      expect(profileApiResponse.status).toBe(200);
     });
     
     test('should successfully sign up with valid email and password without newsletter subscription', async ({ page }) => {
-      const apiResponses = await setupSignupInterceptors(page);
       
       const email = FormValidation.generateRandomEmail();
       const password = FormValidation.generateValidPassword();
@@ -74,6 +75,10 @@ test.describe('Sign Up Tests', () => {
       
       const authValidation = await profilePage.validateSuccessfulAuth(email);
       expect(authValidation.isValid).toBe(true);
+      const authApiResponse = await setupSignupInterceptors(page);
+      expect(authApiResponse.status).toBe(200);
+      const profileApiResponse = await setupProfileInterceptors(page);
+      expect(profileApiResponse.status).toBe(200);
     });
     
     test('should validate password visibility toggle functionality', async ({ page }) => {
@@ -96,7 +101,6 @@ test.describe('Sign Up Tests', () => {
   
   test.describe('Phone Sign Up - Positive Test Cases', () => {
     test('should successfully sign up with valid phone number and password', async ({ page }) => {
-      const apiResponses = await setupSignupInterceptors(page);
       
       const phone = FormValidation.generateRandomPhone();
       const password = FormValidation.generateValidPassword();
@@ -116,15 +120,19 @@ test.describe('Sign Up Tests', () => {
       
       const authValidation = await profilePage.validateSuccessfulAuth(phone);
       expect(authValidation.isValid).toBe(true);
+      const authApiResponse = await setupSignupInterceptors(page);
+      expect(authApiResponse.status).toBe(200);
+      const profileApiResponse = await setupProfileInterceptors(page);
+      expect(profileApiResponse.status).toBe(200);
     });
   });
   
   test.describe('Email Sign Up - Negative Test Cases', () => {
     test('should show error for invalid email format', async ({ page }) => {
-      const invalidEmails = testData.invalid.emails;
-      
+      const invalidEmails = invalid.emails;
+      await page.click(signUp.emailTab);
       for (const email of invalidEmails) {
-        await signUpPage.clearForm();
+        await signUpPage.clearEmailForm();
         await signUpPage.fillEmailSignupForm({
           email,
           password: FormValidation.generateValidPassword()
@@ -137,20 +145,22 @@ test.describe('Sign Up Tests', () => {
           expect(validation.errors).toContain('Email is required');
         } else {
           expect(validation.isValid).toBe(false);
-          expect(validation.errors).toContain('Please enter a valid email address');
+          expect(validation.errors).toContain(selectors.errorMessages.notValidEmailError);
         }
+        const emailError = await signInPage.getErrorMessage('email');
+        expect(emailError).toContain(selectors.errorMessages.notValidEmailError);
       }
     });
     
     test('should show error for invalid password', async ({ page }) => {
-      const invalidPasswords = testData.invalid.passwords;
+      const invalidPasswords = invalid.passwords;
       
       for (const password of invalidPasswords) {
-        await signUpPage.clearForm();
         await signUpPage.fillEmailSignupForm({
           email: FormValidation.generateRandomEmail(),
           password
         });
+        await signUpPage.clearEmailForm();
         
         const validation = signUpPage.validateFormFields({ 
           email: FormValidation.generateRandomEmail(), 
@@ -164,11 +174,12 @@ test.describe('Sign Up Tests', () => {
           expect(validation.isValid).toBe(false);
           expect(validation.errors.length).toBeGreaterThan(0);
         }
+        const emailError = await signInPage.getErrorMessage('password');
+        expect(emailError).toContain(selectors.errorMessages.notValidPassword);
       }
     });
     
     test('should show error for existing email', async ({ page }) => {
-      const apiResponses = await setupSignupInterceptors(page);
       
       // Use existing email
       const existingEmail = existingUser.email;
@@ -180,10 +191,11 @@ test.describe('Sign Up Tests', () => {
       });
       
       await signUpPage.submitSignupForm();
-      await signUpPage.waitForSubmission();
+      const apiResponses = await setupSignupInterceptors(page);
       
-      // Should get 400 status for existing user
-      expect(apiResponses.signup.status).toBe(400);
+      // Should get 403 status for existing user
+      expect(apiResponses.status).toBe(403);
+      await expect(page.getByText(selectors.errorMessages.generalSignUpError)).toBeVisible();
     });
     
     test('should show error for empty required fields', async ({ page }) => {
@@ -199,9 +211,11 @@ test.describe('Sign Up Tests', () => {
       }, true);
       expect(validation.isValid).toBe(false);
       expect(validation.errors).toContain('Email is required');
-      
+      await signInPage.submitSigninForm();
+      const emailError = await signInPage.getErrorMessage('email');
+      expect(emailError).toContain(selectors.errorMessages.emptyEmailError);
       // Test empty password
-      await signUpPage.clearForm();
+      await signUpPage.clearEmailForm();
       await signUpPage.fillEmailSignupForm({
         email: FormValidation.generateRandomEmail(),
         password: ''
@@ -213,15 +227,18 @@ test.describe('Sign Up Tests', () => {
       }, true);
       expect(validation2.isValid).toBe(false);
       expect(validation2.errors).toContain('Password is required');
+
+      await signInPage.submitSigninForm();
+      const passwordError = await signInPage.getErrorMessage('password');
+      expect(passwordError).toContain(selectors.errorMessages.emptyPasswordError);
     });
   });
   
   test.describe('Phone Sign Up - Negative Test Cases', () => {
     test('should show error for invalid phone format', async ({ page }) => {
-      const invalidPhones = testData.invalid.phones;
-      
+      const invalidPhones = invalid.phones;
       for (const phone of invalidPhones) {
-        await signUpPage.clearForm();
+        await signUpPage.clearPhoneForm();
         await signUpPage.fillPhoneSignupForm({
           phone,
           password: FormValidation.generateValidPassword()
@@ -235,11 +252,12 @@ test.describe('Sign Up Tests', () => {
           expect(validation.isValid).toBe(false);
           expect(validation.errors).toContain('Please enter a valid phone number (+966XXXXXXXXX)');
         }
+        const emailError = await signInPage.getErrorMessage('phone');
+        expect(emailError).toContain(selectors.errorMessages.notValidPhoneNumer);
       }
     });
     
     test('should show error for existing phone number', async ({ page }) => {
-      const apiResponses = await setupSignupInterceptors(page);
       
       const existingPhone = existingUser.phone;
       const password = FormValidation.generateValidPassword();
@@ -250,24 +268,32 @@ test.describe('Sign Up Tests', () => {
       });
       
       await signUpPage.submitSignupForm();
-      await signUpPage.waitForSubmission();
+      const apiResponses = await setupSignupInterceptors(page);
       
-      expect(apiResponses.signup.status).toBe(400);
+      expect(apiResponses.status).toBe(403);
+      await expect(page.getByText(selectors.errorMessages.generalSignUpError)).toBeVisible();
+
     });
   });
   
   test.describe('Edge Cases', () => {
     test('should handle minimum valid password length', async ({ page }) => {
       const email = FormValidation.generateRandomEmail();
-      const password = 'Test123!'; // Exactly 9 characters
+      const password = 'qwaszx@1A'; 
+      await signUpPage.fillEmailSignupForm({
+        email: email,
+        password: password
+      });
       
       const validation = signUpPage.validateFormFields({ email, password }, true);
       expect(validation.isValid).toBe(true);
+      await expect(page.locator(selectors.errorMessages.passwordError)).not.toHaveCSS('color', 'rgb(225, 21, 35)');
+
     });
     
     test('should handle special characters in password', async ({ page }) => {
       const email = FormValidation.generateRandomEmail();
-      const specialCharPasswords = ['Test123#', 'Test123?', 'Test123!', 'Test123@'];
+      const specialCharPasswords = ['Test1234#', 'Test1234?', 'Test1234!', 'Test1234@'];
       
       for (const password of specialCharPasswords) {
         const validation = signUpPage.validateFormFields({ email, password }, true);
@@ -298,7 +324,7 @@ test.describe('Sign Up Tests', () => {
         { email: '', password: '', expectedValid: false },
         { email: 'invalid-email', password: 'Test123!', expectedValid: false },
         { email: 'valid@example.com', password: 'short', expectedValid: false },
-        { email: 'valid@example.com', password: 'Test123!', expectedValid: true }
+        { email: 'valid@example.com', password: 'Test1234!', expectedValid: true }
       ];
       
       for (const testCase of testCases) {
@@ -312,7 +338,7 @@ test.describe('Sign Up Tests', () => {
         { phone: '', password: '', expectedValid: false },
         { phone: '123456789', password: 'Test123!', expectedValid: false },
         { phone: '+966501234567', password: 'short', expectedValid: false },
-        { phone: '+966501234567', password: 'Test123!', expectedValid: true }
+        { phone: '501234567', password: 'Test1234!', expectedValid: true }
       ];
       
       for (const testCase of testCases) {
@@ -325,12 +351,13 @@ test.describe('Sign Up Tests', () => {
   test.describe('UI Elements', () => {
     test('should have all required form elements', async ({ page }) => {
       // Check if all form elements are present
-      await expect(page.locator(selectors.signUp.emailInput)).toBeVisible();
       await expect(page.locator(selectors.signUp.phoneInput)).toBeVisible();
       await expect(page.locator(selectors.signUp.passwordInput)).toBeVisible();
       await expect(page.locator(selectors.signUp.createAccountButton)).toBeVisible();
       await expect(page.locator(selectors.signUp.subscribeCheckbox)).toBeVisible();
       await expect(page.locator(selectors.signUp.showHidePasswordIcon)).toBeVisible();
+      await page.click(signUp.emailTab);
+      await expect(page.locator(selectors.signUp.emailInput)).toBeVisible();
     });
     
     test('should enable/disable create account button based on form state', async ({ page }) => {

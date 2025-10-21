@@ -9,7 +9,10 @@
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "test:ui": "playwright test --ui",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "test:browser": "playwright test --project=chromium --project=firefox --project=edge --ui",
+    "test:mobile:ui": "playwright test --ui --project=mobile-chrome"
+    
   },
   "keywords": ["playwright", "e2e", "testing", "almosafer"],
   "author": "Qusai Qishta",

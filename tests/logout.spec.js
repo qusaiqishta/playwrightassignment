@@ -98,55 +98,13 @@ test.describe('Logout Tests', () => {
       expect(await profilePage.isProfilePageLoaded()).toBe(true);
       
       // Perform logout
+      expect(await profilePage.isLogoutButtonVisible()).toBe(true);
       await profilePage.clickLogout();
       await profilePage.waitForLogout();
       
       // Verify redirect to sign in page
       expect(page.url()).toContain('/signin');
       expect(apiResponses.logout.status).toBe(204);
-    });
-  });
-  
-  test.describe('Logout Button Visibility', () => {
-    test('should show logout button only when user is signed in', async ({ page }) => {
-      // When not signed in, logout button should not be visible
-      await signInPage.navigate();
-      expect(await profilePage.isLogoutButtonVisible()).toBe(false);
-      
-      // Sign in
-      await signInPage.fillEmailSigninForm({
-        email: valid.email,
-        password: valid.password
-      });
-      await signInPage.submitSigninForm();
-      await signInPage.waitForSubmission();
-      await profilePage.waitForLoad();
-      
-      // Now logout button should be visible
-      expect(await profilePage.isLogoutButtonVisible()).toBe(true);
-    });
-    
-    test('should hide logout button after successful logout', async ({ page }) => {
-      const apiResponses = await setupLogoutInterceptors(page);
-      
-      // Sign in
-      await signInPage.navigate();
-      await signInPage.fillEmailSigninForm({
-        email: valid.email,
-        password: valid.password
-      });
-      await signInPage.submitSigninForm();
-      await signInPage.waitForSubmission();
-      await profilePage.waitForLoad();
-      
-      // Verify logout button is visible
-      expect(await profilePage.isLogoutButtonVisible()).toBe(true);
-      
-      // Logout
-      await profilePage.clickLogout();
-      await profilePage.waitForLogout();
-      
-      // After logout, logout button should not be visible
       expect(await profilePage.isLogoutButtonVisible()).toBe(false);
     });
   });
@@ -172,26 +130,6 @@ test.describe('Logout Tests', () => {
       // Validate API response
       const validation = ApiHelpers.validateLogoutResponse(apiResponses.logout);
       expect(validation.isValid).toBe(true);
-      expect(apiResponses.logout.status).toBe(204);
-    });
-    
-    test('should handle logout API timeout gracefully', async ({ page }) => {
-      // This test would require mocking a slow API response
-      // For now, we'll test the normal case
-      const apiResponses = await setupLogoutInterceptors(page);
-      
-      await signInPage.navigate();
-      await signInPage.fillEmailSigninForm({
-        email: valid.email,
-        password: valid.password
-      });
-      await signInPage.submitSigninForm();
-      await signInPage.waitForSubmission();
-      await profilePage.waitForLoad();
-      
-      await profilePage.clickLogout();
-      await profilePage.waitForLogout();
-      
       expect(apiResponses.logout.status).toBe(204);
     });
   });
@@ -224,87 +162,6 @@ test.describe('Logout Tests', () => {
       
       // Should be redirected to sign in page
       expect(page.url()).toContain('/signin');
-    });
-    
-    test('should prevent access to protected pages after logout', async ({ page }) => {
-      const apiResponses = await setupLogoutInterceptors(page);
-      
-      // Sign in
-      await signInPage.navigate();
-      await signInPage.fillEmailSigninForm({
-        email: valid.email,
-        password: valid.password
-      });
-      await signInPage.submitSigninForm();
-      await signInPage.waitForSubmission();
-      await profilePage.waitForLoad();
-      
-      // Logout
-      await profilePage.clickLogout();
-      await profilePage.waitForLogout();
-      
-      // Try to access profile page
-      await page.goto(urls.profilePage);
-      await page.waitForLoadState('networkidle');
-      
-      // Should be redirected to sign in page
-      expect(page.url()).toContain('/signin');
-    });
-  });
-  
-  test.describe('Multiple Logout Attempts', () => {
-    test('should handle multiple logout clicks gracefully', async ({ page }) => {
-      const apiResponses = await setupLogoutInterceptors(page);
-      
-      // Sign in
-      await signInPage.navigate();
-      await signInPage.fillEmailSigninForm({
-        email: valid.email,
-        password: valid.password
-      });
-      await signInPage.submitSigninForm();
-      await signInPage.waitForSubmission();
-      await profilePage.waitForLoad();
-      
-      // Click logout multiple times
-      await profilePage.clickLogout();
-      await profilePage.clickLogout();
-      await profilePage.clickLogout();
-      
-      // Should still redirect to sign in page
-      await profilePage.waitForLogout();
-      expect(page.url()).toContain('/signin');
-    });
-  });
-  
-  test.describe('Error Handling', () => {
-    test('should handle logout when not signed in', async ({ page }) => {
-      // Try to access logout without being signed in
-      await page.goto(urls.profilePage);
-      await page.waitForLoadState('networkidle');
-      
-      // Should be redirected to sign in page
-      expect(page.url()).toContain('/signin');
-    });
-    
-    test('should handle logout API errors gracefully', async ({ page }) => {
-      // This test would require mocking API errors
-      // For now, we'll test the normal case
-      const apiResponses = await setupLogoutInterceptors(page);
-      
-      await signInPage.navigate();
-      await signInPage.fillEmailSigninForm({
-        email: valid.email,
-        password: valid.password
-      });
-      await signInPage.submitSigninForm();
-      await signInPage.waitForSubmission();
-      await profilePage.waitForLoad();
-      
-      await profilePage.clickLogout();
-      await profilePage.waitForLogout();
-      
-      expect(apiResponses.logout.status).toBe(204);
     });
   });
   

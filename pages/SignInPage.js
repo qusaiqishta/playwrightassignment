@@ -64,6 +64,7 @@ class SignInPage {
    * @param {string} formData.password - Password
    */
   async fillEmailSigninForm(formData) {
+    await this.page.click(selectors.signIn.emailTab);
     await this.fillEmail(formData.email);
     await this.fillPassword(formData.password);
   }
@@ -162,63 +163,39 @@ class SignInPage {
    * Get form field values
    * @returns {Promise<object>} - Form field values
    */
-  async getFormValues() {
+  async getEmailFormValues() {
     return {
-      email: await this.page.inputValue(selectors.signIn.emailInput),
+      email: await this.page.getAttribute(selectors.signIn.emailInput, 'value'),
+      password: await this.page.getAttribute(selectors.signIn.passwordInput, 'value')
+    };
+  }
+  
+  
+  async getPhoneFormValues() {
+    return {
       phone: await this.page.inputValue(selectors.signIn.phoneInput),
       password: await this.page.inputValue(selectors.signIn.passwordInput)
     };
   }
-  
   /**
    * Clear all form fields
    */
-  async clearForm() {
+  async clearEmailForm() {
     await this.page.fill(selectors.signIn.emailInput, '');
+    await this.page.fill(selectors.signIn.passwordInput, '');
+  }
+
+  async clearPhoneForm() {
     await this.page.fill(selectors.signIn.phoneInput, '');
     await this.page.fill(selectors.signIn.passwordInput, '');
   }
   
-  /**
-   * Check if "Remember me" checkbox exists and is clickable
-   * @returns {Promise<boolean>} - True if checkbox exists
-   */
-  async hasRememberMeCheckbox() {
-    const checkbox = this.page.locator('input[type="checkbox"][name*="remember"]');
-    return await checkbox.isVisible();
-  }
-  
-  /**
-   * Check or uncheck "Remember me" checkbox
-   * @param {boolean} checked - Whether to check or uncheck
-   */
-  async setRememberMe(checked = true) {
-    const checkbox = this.page.locator('input[type="checkbox"][name*="remember"]');
-    if (await checkbox.isVisible()) {
-      const isChecked = await checkbox.isChecked();
-      if (checked !== isChecked) {
-        await checkbox.click();
-      }
-    }
-  }
-  
-  /**
-   * Check if "Forgot password" link exists
-   * @returns {Promise<boolean>} - True if link exists
-   */
-  async hasForgotPasswordLink() {
-    const link = this.page.locator('text=Forgot password');
-    return await link.isVisible();
-  }
   
   /**
    * Click "Forgot password" link
    */
   async clickForgotPassword() {
-    const link = this.page.locator('text=Forgot password');
-    if (await link.isVisible()) {
-      await link.click();
-    }
+    await this.page.click('text=Forgot your password?');
   }
 }
 

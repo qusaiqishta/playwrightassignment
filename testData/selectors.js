@@ -14,9 +14,10 @@ const selectors = {
     emailInput: '#InputField_email',
     passwordInput: '#InputField_password',
     phoneInput: '#InputField_number',
-    createAccountButton: '#mui-9',
-    subscribeCheckbox: '[data-testid="checkbox_subscribe"]',
+    createAccountButton: '[type="submit"]',
+    subscribeCheckbox: '[data-testid="checkbox_subscribe"] > span input',
     showHidePasswordIcon: '[data-testid="InputField_password"] svg',
+    emailTab:'[data-testid="tab-tab-1"]'
   },
   
   // Sign in form selectors (same as sign up)
@@ -24,8 +25,9 @@ const selectors = {
     emailInput: '#InputField_email',
     passwordInput: '#InputField_password',
     phoneInput: '#InputField_number',
-    signInButton: '#mui-9', // Same button selector as create account
+    signInButton: '[type="submit"]', // Same button selector as create account
     showHidePasswordIcon: '[data-testid="InputField_password"] svg',
+    emailTab:'[data-testid="tab-tab-1"]',
   },
   
   // Profile page selectors
@@ -37,10 +39,18 @@ const selectors = {
   
   // Error message selectors
   errorMessages: {
-    emailError: '[data-testid="email-error"]',
-    passwordError: '[data-testid="password-error"]',
-    phoneError: '[data-testid="phone-error"]',
-    generalError: '[data-testid="general-error"]',
+    emailError: '[data-testid="InputField_email"] ~p',
+    passwordError: '[data-testid="password-policy-text"]',
+    phoneError: '[data-testid="InputField_password"] ~p',
+    generalLoginError: "The email and/or password don't seem to be right. Please check and try again.",
+    generalSignUpError: "An account already exists for this email address",
+    emptyEmailError:"Please enter your email address",
+    emptyPasswordError:"Please enter your password",
+    notValidEmailError:"Please enter a valid email address",
+    notValidPhoneNumer:"Please enter a valid mobile number",
+    emptyPhoneError:'Please enter a mobile number',
+    notValidPassword:'Your password must:'
+
   },
   
   // URLs

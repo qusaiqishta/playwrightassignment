@@ -38,6 +38,24 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'edge',
+      use: {
+        ...devices['Desktop Edge'],
+        channel: 'msedge', // Explicitly use Microsoft Edge
+      },
+    },
+    {
+      name: 'mobile-chrome',
+      use: {
+        ...devices['Pixel 5'],
+        baseURL: 'https://next-staging.almosafer.com/mweb',
+      },
+    },
   ],
 
   /* Global setup to block analytics / GTM / trackers before any test */

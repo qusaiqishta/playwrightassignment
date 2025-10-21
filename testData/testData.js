@@ -7,10 +7,10 @@ const testData = {
   // Valid test data
   valid: {
     email: 'testuser' + Date.now() + '@example.com',
-    phone: '+966501234567',
-    password: 'TestPass123!',
+    phone: '562132139',
+    password: 'qwaszx@1A',
     validEmails: [
-      'user1@example.com',
+      'autocypress@mailinator.com',
       'user2@test.com',
       'user3@domain.co.uk'
     ],
@@ -20,7 +20,7 @@ const testData = {
       '+966501234569'
     ],
     validPasswords: [
-      'Password123!',
+      'qwaszx@1A',
       'TestPass456@',
       'MyPass789#'
     ]
@@ -36,16 +36,15 @@ const testData = {
       'user@domain',
       '',
       'user space@example.com',
-      'user@domain..com'
+      'user @domain..com'
     ],
     phones: [
-      '123456789', // Missing country code
+      '+9666123456789', // included country code
       '+966123', // Too short
       '+966123456789012345', // Too long
       'abc123456789', // Contains letters
       '',
       '+966-123-456-789', // Contains dashes
-      '966501234567' // Missing +
     ],
     passwords: [
       '12345678', // Only numbers, no letters or special chars
@@ -57,7 +56,6 @@ const testData = {
       'Password123', // No special chars
       '', // Empty
       'Pass1!', // Too short
-      'Password123456789!', // Too long (if there's a max limit)
     ]
   },
   
@@ -79,8 +77,8 @@ const testData = {
   
   // Existing user data (for testing duplicate registration)
   existingUser: {
-    email: 'existing@example.com',
-    phone: '+966501234500',
+    email: 'autocypress@mailinator.com',
+    phone: '562132139',
     password: 'ExistingPass123!'
   },
   

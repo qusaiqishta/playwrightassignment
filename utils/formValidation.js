@@ -23,7 +23,7 @@ class FormValidation {
    * @returns {boolean} - True if valid, false otherwise
    */
   static isValidPhone(phone) {
-    const phoneRegex = /^\+966[0-9]{9}$/;
+    const phoneRegex =  /^[0-9]{9}$/;
     return phoneRegex.test(phone);
   }
   
@@ -135,7 +135,7 @@ class FormValidation {
       // Validate email
       if (!formData.email || formData.email.trim() === '') {
         result.isValid = false;
-        result.errors.push('Email is required');
+        result.errors.push('Please enter your email address');
       } else if (!this.isValidEmail(formData.email)) {
         result.isValid = false;
         result.errors.push('Please enter a valid email address');
@@ -147,14 +147,14 @@ class FormValidation {
         result.errors.push('Phone number is required');
       } else if (!this.isValidPhone(formData.phone)) {
         result.isValid = false;
-        result.errors.push('Please enter a valid phone number (+966XXXXXXXXX)');
+        result.errors.push('Please enter a valid mobile number');
       }
     }
     
     // Validate password
     if (!formData.password || formData.password.trim() === '') {
       result.isValid = false;
-      result.errors.push('Password is required');
+      result.errors.push('Please enter your password');
     }
     
     return result;

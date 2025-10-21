@@ -13,32 +13,11 @@ class ApiHelpers {
    * @returns {Promise<object>} - Object containing intercepted responses
    */
   static async setupSignupInterceptors(page) {
-    const responses = {
-      signup: null,
-      userProfile: null
-    };
-    
-    // Intercept signup API call
-    page.route('**/api/myaccount/v4/user/local/signup', async route => {
-      const response = await route.fetch();
-      responses.signup = {
+      const response = await page.waitForResponse('**/api/myaccount/v4/user/local/signup');
+      return {
         status: response.status(),
-        body: await response.json().catch(() => null)
+        body: await response.json().catch(() => null),
       };
-      await route.fulfill({ response });
-    });
-    
-    // Intercept user profile API call
-    page.route('**/api/myaccount/v4/user/me', async route => {
-      const response = await route.fetch();
-      responses.userProfile = {
-        status: response.status(),
-        body: await response.json().catch(() => null)
-      };
-      await route.fulfill({ response });
-    });
-    
-    return responses;
   }
   
   /**
@@ -46,34 +25,23 @@ class ApiHelpers {
    * @param {Page} page - Playwright page object
    * @returns {Promise<object>} - Object containing intercepted responses
    */
-  static async setupSigninInterceptors(page) {
-    const responses = {
-      signin: null,
-      userProfile: null
+  static async waitForSigninToken(page) {
+    const response = await page.waitForResponse('**/api/myaccount/v3/auth/token');
+    return {
+      status: response.status(),
+      body: await response.json().catch(() => null),
     };
-    
-    // Intercept signin API call
-    page.route('**/api/myaccount/v3/auth/token', async route => {
-      const response = await route.fetch();
-      responses.signin = {
-        status: response.status(),
-        body: await response.json().catch(() => null)
-      };
-      await route.fulfill({ response });
-    });
-    
-    // Intercept user profile API call
-    page.route('**/api/myaccount/v4/user/me', async route => {
-      const response = await route.fetch();
-      responses.userProfile = {
-        status: response.status(),
-        body: await response.json().catch(() => null)
-      };
-      await route.fulfill({ response });
-    });
-    
-    return responses;
   }
+
+  // Waits for the user profile request and returns its response
+  static async waitForUserProfile(page) {
+    const response = await page.waitForResponse('**/api/myaccount/v4/user/me');
+    return {
+      status: response.status(),
+      body: await response.json().catch(() => null),
+    };
+  }
+  
   
   /**
    * Sets up API interceptors for logout flow
@@ -81,21 +49,11 @@ class ApiHelpers {
    * @returns {Promise<object>} - Object containing intercepted responses
    */
   static async setupLogoutInterceptors(page) {
-    const responses = {
-      logout: null
-    };
-    
-    // Intercept logout API call
-    page.route('**/api/myaccount/v3/auth/revoke', async route => {
-      const response = await route.fetch();
-      responses.logout = {
+    const response = await page.waitForResponse('**/api/myaccount/v3/auth/revoke');
+      return {
         status: response.status(),
-        body: await response.json().catch(() => null)
+        body: await response.json().catch(() => null),
       };
-      await route.fulfill({ response });
-    });
-    
-    return responses;
   }
   
   /**
@@ -223,5 +181,6 @@ export default ApiHelpers;
 
 // Named exports for specific functions
 export const setupSignupInterceptors = ApiHelpers.setupSignupInterceptors;
-export const setupSigninInterceptors = ApiHelpers.setupSigninInterceptors;
+export const setupSigninInterceptors = ApiHelpers.waitForSigninToken;
+export const setupProfileInterceptors = ApiHelpers.waitForUserProfile;
 export const setupLogoutInterceptors = ApiHelpers.setupLogoutInterceptors;

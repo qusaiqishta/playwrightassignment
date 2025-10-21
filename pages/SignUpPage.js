@@ -16,7 +16,6 @@ class SignUpPage {
    */
   async navigate() {
     await this.page.goto(selectors.urls.signUpPage);
-    await this.page.waitForLoadState('networkidle');
   }
   
   /**
@@ -78,6 +77,7 @@ class SignUpPage {
    * @param {boolean} formData.subscribe - Whether to subscribe to newsletter
    */
   async fillEmailSignupForm(formData) {
+    await this.page.click(selectors.signUp.emailTab);
     await this.fillEmail(formData.email);
     await this.fillPassword(formData.password);
     
@@ -197,8 +197,13 @@ class SignUpPage {
   /**
    * Clear all form fields
    */
-  async clearForm() {
+  async clearEmailForm() {
     await this.page.fill(selectors.signUp.emailInput, '');
+    await this.page.fill(selectors.signUp.passwordInput, '');
+    await this.setSubscribeCheckbox(false);
+  }
+
+  async clearPhoneForm() {
     await this.page.fill(selectors.signUp.phoneInput, '');
     await this.page.fill(selectors.signUp.passwordInput, '');
     await this.setSubscribeCheckbox(false);

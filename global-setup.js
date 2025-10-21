@@ -44,7 +44,18 @@ export default async function globalSetup() {
         'pinterest.com',
         'www.pinterest.com',
         'criteo.com',
-        'app.measurementapi.com'
+        'app.measurementapi.com',
+
+        'recaptcha.net',
+        'google.com/recaptcha',
+        '/recaptcha/enterprise.js',
+        '/recaptcha/enterprise/anchor',
+
+        '/api/splitChanges',
+        '/api/mySegments',
+        '/sse',
+        '/wi/config',
+
       ];
       
 
