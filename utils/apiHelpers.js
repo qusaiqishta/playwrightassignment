@@ -32,6 +32,21 @@ class ApiHelpers {
       body: await response.json().catch(() => null),
     };
   }
+  static async  interceptAuthWithTestCaptcha(page) {
+    await page.route('**/api/myaccount/v3/auth/token', async (route, request) => {
+      const postData = request.postData() || '';
+      const params = new URLSearchParams(postData);
+  
+      // Inject the test captcha token
+      params.set('captchaToken', 'TestCaptchaTokenForDevAndStaging');
+  
+      await route.continue({
+        method: 'POST',
+        headers: request.headers(),
+        postData: params.toString(),
+      });
+    });
+  }
 
   // Waits for the user profile request and returns its response
   static async waitForUserProfile(page) {
@@ -184,3 +199,4 @@ export const setupSignupInterceptors = ApiHelpers.setupSignupInterceptors;
 export const setupSigninInterceptors = ApiHelpers.waitForSigninToken;
 export const setupProfileInterceptors = ApiHelpers.waitForUserProfile;
 export const setupLogoutInterceptors = ApiHelpers.setupLogoutInterceptors;
+export const interceptAuthWithTestCaptcha = ApiHelpers.interceptAuthWithTestCaptcha;
