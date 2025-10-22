@@ -15,7 +15,10 @@ class SignInPage {
    * Navigate to sign in page
    */
   async navigate() {
-    await this.page.goto(selectors.urls.signInPage);
+    await this.page.goto(selectors.urls.signInPage, {
+      timeout: 60000, 
+      waitUntil: 'load',
+    });
     // await this.page.waitForLoadState('networkidle');
   }
   
@@ -25,6 +28,14 @@ class SignInPage {
    */
   async fillEmail(email) {
     await this.page.fill(selectors.signIn.emailInput, email);
+  }
+
+  async getFormValues() {
+    return {
+      email: await this.page.inputValue(selectors.signUp.emailInput),
+      phone: await this.page.inputValue(selectors.signUp.phoneInput),
+      password: await this.page.inputValue(selectors.signUp.passwordInput),
+    };
   }
   
   /**

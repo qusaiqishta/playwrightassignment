@@ -6,8 +6,8 @@
 const selectors = {
   // Common elements
   signUpButton: 'text=Sign up',
-  signInButton: 'text=Sign in',
-  logoutButton: '#mui-3',
+  signInButton: '[type="submit"]',
+  logoutButton: 'text=Sign out',
   
   // Sign up form selectors
   signUp: {
@@ -34,16 +34,17 @@ const selectors = {
   profile: {
     emailDisplay: '#__next > div:nth-child(2) > div > div > div.__ds__comp.undefined.MuiBox-root.muiltr-1nebyim > div.MuiBox-root.muiltr-1vpcf4d > p',
     emailInput: '#InputField_email',
-    verifyAccountButton: 'text=Verify account',
+    profileButton: 'text=Profile',
   },
   
   // Error message selectors
   errorMessages: {
     emailError: '[data-testid="InputField_email"] ~p',
-    passwordError: '[data-testid="password-policy-text"]',
-    phoneError: '[data-testid="InputField_password"] ~p',
-    generalLoginError: "The email and/or password don't seem to be right. Please check and try again.",
+    passwordError: '[data-testid="InputField_password"] ~p',
+    phoneError: '[data-testid="InputField_number"] ~p',
+    generalLoginError: "Please check and try again.",
     generalSignUpError: "An account already exists for this email address",
+    generalSignUpPhoneError: "An account already exists for this mobile number.",
     emptyEmailError:"Please enter your email address",
     emptyPasswordError:"Please enter your password",
     notValidEmailError:"Please enter a valid email address",

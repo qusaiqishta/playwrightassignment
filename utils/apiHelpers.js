@@ -32,7 +32,8 @@ class ApiHelpers {
       body: await response.json().catch(() => null),
     };
   }
-  static async  interceptAuthWithTestCaptcha(page) {
+
+  static async interceptAuthWithTestCaptcha(page) {
     await page.route('**/api/myaccount/v3/auth/token', async (route, request) => {
       const postData = request.postData() || '';
       const params = new URLSearchParams(postData);
@@ -47,6 +48,23 @@ class ApiHelpers {
       });
     });
   }
+
+  static async interceptSignUpWithTestCaptcha(page) {
+    await page.route('**/api/myaccount/v4/user/local/signup', async (route, request) => {
+      const headers = {
+        ...request.headers(),
+        'x-captcha-token': 'TestCaptchaTokenForDevAndStaging',
+        'x-authorization': 'skdjfh73273$7268u2j89s',
+      };
+  
+      await route.continue({
+        method: 'POST',
+        headers,
+        postData: request.postData(),
+      });
+    });
+  }
+  
 
   // Waits for the user profile request and returns its response
   static async waitForUserProfile(page) {
@@ -200,3 +218,4 @@ export const setupSigninInterceptors = ApiHelpers.waitForSigninToken;
 export const setupProfileInterceptors = ApiHelpers.waitForUserProfile;
 export const setupLogoutInterceptors = ApiHelpers.setupLogoutInterceptors;
 export const interceptAuthWithTestCaptcha = ApiHelpers.interceptAuthWithTestCaptcha;
+export const interceptSignUpWithTestCaptcha = ApiHelpers.interceptSignUpWithTestCaptcha;

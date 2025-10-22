@@ -175,8 +175,8 @@ class FormValidation {
    * @returns {string} - Random valid phone number
    */
   static generateRandomPhone() {
-    const random = Math.floor(Math.random() * 1000000000);
-    return `+966${random.toString().padStart(9, '0')}`;
+    const random = Math.floor(Math.random() * 100000000);
+    return `5${random.toString().padStart(8, '0')}`;
   }
   
   /**

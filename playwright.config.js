@@ -4,27 +4,28 @@ import { defineConfig, devices } from '@playwright/test';
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
-  navigationTimeout: 60000, // Increase page load timeout to 60s
+  timeout: 90000,
   testDir: './tests',
-
+  
   /* Run tests in files in parallel */
   fullyParallel: true,
-
+  
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-
+  
   /* Retry on CI only */
   retries: process.env.CI ? 1 : 0,
-
+  
   /* Use 1 worker to avoid conflicts with website navigation */
   workers: 1,
-
+  
   /* Reporter to use */
   reporter: 'html',
-
+  
   /* Shared settings for all projects */
   use: {
     baseURL: 'https://next-staging.almosafer.com',
+    navigationTimeout: 60000, // Increase page load timeout to 60s
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

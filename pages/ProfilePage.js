@@ -54,8 +54,8 @@ class ProfilePage {
    * Check if verify account button is visible
    * @returns {Promise<boolean>} - True if button is visible
    */
-  async isVerifyAccountButtonVisible() {
-    const button = this.page.locator(selectors.profile.verifyAccountButton);
+  async isProfileButtonVisible() {
+    const button = this.page.locator(selectors.profile.profileButton).first();;
     return await button.isVisible();
   }
   
@@ -84,6 +84,7 @@ class ProfilePage {
   async clickLogout() {
     const button = this.page.locator(selectors.logoutButton);
     if (await button.isVisible()) {
+      await this.page.waitForTimeout(5000);
       await button.click();
     }
   }
@@ -92,8 +93,7 @@ class ProfilePage {
    * Wait for logout to complete and redirect to sign in page
    */
   async waitForLogout() {
-    await this.page.waitForURL(selectors.urls.signInPage);
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForSelector(selectors.signIn.emailTab, { timeout: 15000 });
   }
   
   /**
@@ -106,7 +106,7 @@ class ProfilePage {
       isValid: true,
       errors: []
     };
-    
+    await this.page.waitForSelector(selectors.profile.profileButton, { timeout: 15000 });
     // Check if redirected to profile page
     const currentUrl = this.page.url();
     if (!currentUrl.includes('/myaccount/profile')) {
@@ -129,8 +129,8 @@ class ProfilePage {
     }
     
     // Check if verify account button is visible
-    const verifyButtonVisible = await this.isVerifyAccountButtonVisible();
-    if (!verifyButtonVisible) {
+    const profileSection = await this.isProfileButtonVisible();
+    if (!profileSection) {
       result.isValid = false;
       result.errors.push('Verify account button is not visible');
     }

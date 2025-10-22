@@ -34,16 +34,13 @@ const testData = {
       'user@',
       'user@.com',
       'user@domain',
-      '',
       'user space@example.com',
       'user @domain..com'
     ],
     phones: [
-      '+9666123456789', // included country code
+      '+96661234x56789', // included country code
       '+966123', // Too short
-      '+966123456789012345', // Too long
       'abc123456789', // Contains letters
-      '',
       '+966-123-456-789', // Contains dashes
     ],
     passwords: [

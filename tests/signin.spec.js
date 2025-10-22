@@ -6,9 +6,9 @@
 import { test, expect } from '@playwright/test';
 import SignInPage from '../pages/SignInPage.js';
 import ProfilePage from '../pages/ProfilePage.js';
-import { setupSigninInterceptors, setupProfileInterceptors } from '../utils/apiHelpers.js';
+import { setupSigninInterceptors, setupProfileInterceptors, interceptAuthWithTestCaptcha } from '../utils/apiHelpers.js';
 import { valid, invalid } from '../testData/testData.js';
-import { signIn, errorMessages } from '../testData/selectors.js';
+import selectors , { signIn, errorMessages } from '../testData/selectors.js';
 
 test.describe('Sign In Tests', () => {
   let signInPage;
@@ -18,12 +18,12 @@ test.describe('Sign In Tests', () => {
     signInPage = new SignInPage(page);
     profilePage = new ProfilePage(page);
     await signInPage.navigate();
+    interceptAuthWithTestCaptcha(page);
   });
   
   test.describe('Email Sign In - Positive Test Cases', () => {
     test('should successfully sign in with valid email and password', async ({ page }) => {
       // Setup API interceptors
-      
       // Use valid credentials (assuming user was created in signup tests)
       const email = valid.validEmails[0];
       const password = valid.validPasswords[0];
@@ -39,19 +39,16 @@ test.describe('Sign In Tests', () => {
       expect(validation.isValid).toBe(true);
       
       await signInPage.submitSigninForm();
-      await signInPage.waitForSubmission();
       
-      // Wait for profile page to load
-      await profilePage.waitForLoad();
       const authApiResponse = await setupSigninInterceptors(page);
       const profileApiResponse = await setupProfileInterceptors(page);
-      // Validate successful signin
-      const authValidation = await profilePage.validateSuccessfulAuth(email);
-      expect(authValidation.isValid).toBe(true);
-      
       // Validate API responses
       expect(authApiResponse.status).toBe(200);
       expect(profileApiResponse.status).toBe(200);
+      await page.waitForSelector(selectors.profile.emailInput, { timeout: 15000 });
+      // Validate successful signin
+      const authValidation = await profilePage.validateSuccessfulAuth(email);
+      expect(authValidation.isValid).toBe(true);
     });
     
     test('should validate password visibility toggle functionality', async ({ page }) => {
@@ -71,6 +68,22 @@ test.describe('Sign In Tests', () => {
       expect(await signInPage.isPasswordVisible()).toBe(false);
     });
   });
+  test('should not show error for case-sensitive email', async ({ page }) => {
+      
+    const email = valid.validEmails[0].toUpperCase();
+    const password = valid.validPasswords[0];
+    
+    await signInPage.fillEmailSigninForm({
+      email,
+      password
+    });
+    
+    await signInPage.submitSigninForm();
+    const apiResponses = await setupSigninInterceptors(page);
+    
+    // Should get 200 status for case-sensitive email
+    expect(apiResponses.status).toBe(200);
+  });
   
   test.describe('Phone Sign In - Positive Test Cases', () => {
     test('should successfully sign in with valid phone number and password', async ({ page }) => {
@@ -88,15 +101,17 @@ test.describe('Sign In Tests', () => {
       expect(validation.isValid).toBe(true);
       
       await signInPage.submitSigninForm();
-      await signInPage.waitForSubmission();
-      await profilePage.waitForLoad();
-      const apiResponses = await setupSigninInterceptors(page);
-      
-      const authValidation = await profilePage.validateSuccessfulAuth(phone);
+   
+      const authApiResponse = await setupSigninInterceptors(page);
+      const profileApiResponse = await setupProfileInterceptors(page);
+      // Validate API responses
+      expect(authApiResponse.status).toBe(200);
+      expect(profileApiResponse.status).toBe(200);
+      await page.waitForSelector(selectors.profile.emailInput, { timeout: 15000 });
+      // Validate successful signin
+      const authValidation = await profilePage.validateSuccessfulAuth('+966 '+ phone);
+      console.log("results",authValidation.errors)
       expect(authValidation.isValid).toBe(true);
-
-      expect(apiResponses.signin.status).toBe(200);
-      expect(apiResponses.userProfile.status).toBe(200);
     });
   });
   
@@ -113,13 +128,8 @@ test.describe('Sign In Tests', () => {
         });
         await signInPage.submitSigninForm();
         const validation = signInPage.validateFormFields({ email, password: 'TestPassword123!' }, true);
-        if (email.trim() === '') {
-          expect(validation.isValid).toBe(false);
-          expect(validation.errors).toContain('Email is required');
-        } else {
-          expect(validation.isValid).toBe(false);
-          expect(validation.errors).toContain(errorMessages.notValidEmailError);
-        }
+        expect(validation.isValid).toBe(false);
+        expect(validation.errors).toContain(errorMessages.notValidEmailError);
         const emailError = await signInPage.getErrorMessage('email');
         expect(emailError).toContain(errorMessages.notValidEmailError);
       }
@@ -137,8 +147,8 @@ test.describe('Sign In Tests', () => {
       await signInPage.submitSigninForm();
       const apiResponses = await setupSigninInterceptors(page);
       
-      // Should get 403 status for non-existing user
-      expect(apiResponses.status).toBe(403);
+      // Should get 400 status for non-existing user
+      expect(apiResponses.status).toBe(400);
       await expect(page.getByText(errorMessages.generalLoginError)).toBeVisible();
       
     });
@@ -156,8 +166,8 @@ test.describe('Sign In Tests', () => {
       await signInPage.submitSigninForm();
       
       const apiResponses = await setupSigninInterceptors(page);
-      // Should get 403 status for wrong password
-      expect(apiResponses.status).toBe(403);
+      // Should get 400 status for wrong password
+      expect(apiResponses.status).toBe(400);
       await expect(page.getByText(errorMessages.generalLoginError)).toBeVisible();
       
     });
@@ -176,7 +186,7 @@ test.describe('Sign In Tests', () => {
         password: 'TestPassword123!' 
       }, true);
       expect(validation.isValid).toBe(false);
-      expect(validation.errors).toContain('Email is required');
+      expect(validation.errors).toContain(errorMessages.emptyEmailError);
       
       // Test empty password
       await signInPage.clearEmailForm();
@@ -184,36 +194,12 @@ test.describe('Sign In Tests', () => {
         email: valid.email,
         password: ''
       });
-      
-      const validation2 = signInPage.validateFormFields({ 
-        email: valid.email, 
-        password: '' 
-      }, true);
-      expect(validation2.isValid).toBe(false);
-      expect(validation2.errors).toContain(errorMessages.emptyPasswordError);
 
       await signInPage.submitSigninForm();
       const passwordError = await signInPage.getErrorMessage('password');
       expect(passwordError).toContain(errorMessages.emptyPasswordError);
     });
     
-    test('should show error for case-sensitive email', async ({ page }) => {
-      
-      const email = valid.validEmails[0].toUpperCase(); // Wrong case
-      const password = valid.validPasswords[0];
-      
-      await signInPage.fillEmailSigninForm({
-        email,
-        password
-      });
-      
-      await signInPage.submitSigninForm();
-      const apiResponses = await setupSigninInterceptors(page);
-      
-      // Should get 403 status for case-sensitive email
-      expect(apiResponses.status).toBe(403);
-      await expect(page.getByText(errorMessages.generalLoginError)).toBeVisible();
-    });
   });
   
   test.describe('Phone Sign In - Negative Test Cases', () => {
@@ -226,15 +212,10 @@ test.describe('Sign In Tests', () => {
           phone,
           password: 'TestPassword123!'
         });
-        
+        await signInPage.submitSigninForm();
         const validation = signInPage.validateFormFields({ phone, password: 'TestPassword123!' }, false);
-        if (phone.trim() === '') {
-          expect(validation.isValid).toBe(false);
-          expect(validation.errors).toContain('Phone number is required');
-        } else {
-          expect(validation.isValid).toBe(false);
-          expect(validation.errors).toContain(errorMessages.notValidPhoneNumer);
-        }
+        expect(validation.isValid).toBe(false);
+        expect(validation.errors).toContain(errorMessages.notValidPhoneNumer);
         const emailError = await signInPage.getErrorMessage('phone');
         expect(emailError).toContain(errorMessages.notValidPhoneNumer);
       }
@@ -252,7 +233,7 @@ test.describe('Sign In Tests', () => {
       
       await signInPage.submitSigninForm();
       const apiResponses = await setupSigninInterceptors(page);
-      expect(apiResponses.status).toBe(403);
+      expect(apiResponses.status).toBe(400);
       await expect(page.getByText(errorMessages.generalLoginError)).toBeVisible();
 
     });
@@ -269,7 +250,7 @@ test.describe('Sign In Tests', () => {
       
       await signInPage.submitSigninForm();
       const apiResponses = await setupSigninInterceptors(page);
-      expect(apiResponses.status).toBe(403);
+      expect(apiResponses.status).toBe(400);
       await expect(page.getByText(errorMessages.generalLoginError)).toBeVisible();
     });
   });

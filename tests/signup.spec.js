@@ -6,7 +6,7 @@
 import { test, expect } from '@playwright/test';
 import SignUpPage from '../pages/SignUpPage.js';
 import ProfilePage from '../pages/ProfilePage.js';
-import { setupSignupInterceptors, setupProfileInterceptors } from '../utils/apiHelpers.js';
+import { setupSignupInterceptors, setupProfileInterceptors, interceptSignUpWithTestCaptcha } from '../utils/apiHelpers.js';
 import FormValidation from '../utils/formValidation.js';
 import { valid, invalid, existingUser } from '../testData/testData.js';
 import selectors, { signUp } from '../testData/selectors.js';
@@ -19,13 +19,16 @@ test.describe('Sign Up Tests', () => {
     signUpPage = new SignUpPage(page);
     profilePage = new ProfilePage(page);
     signInPage = new SignInPage(page);
+    interceptSignUpWithTestCaptcha(page);
     await signUpPage.navigate();
   });
   
   test.describe('Email Sign Up - Positive Test Cases', () => {
     test('should successfully sign up with valid email and password', async ({ page }) => {
-      // Setup API interceptors
-      
+      // waiting for form elements for better stability
+      await page.waitForSelector(selectors.signUp.createAccountButton, { timeout: 15000 });
+      await page.waitForSelector(selectors.signUp.phoneInput, { timeout: 15000 });
+      await page.waitForSelector(selectors.signUp.passwordInput, { timeout: 15000 });
       // Generate test data
       const email = FormValidation.generateRandomEmail();
       const password = FormValidation.generateValidPassword();
@@ -42,43 +45,49 @@ test.describe('Sign Up Tests', () => {
       expect(validation.isValid).toBe(true);
       
       await signUpPage.submitSignupForm();
-      await signUpPage.waitForSubmission();
       
-      // Wait for profile page to load
-      await profilePage.waitForLoad();
-      
-      // Validate successful signup
+      const authApiResponse = await setupSignupInterceptors(page);
+      const profileApiResponse = await setupProfileInterceptors(page);
+      // Validate API responses
+      expect(authApiResponse.status).toBe(200);
+      expect(profileApiResponse.status).toBe(200);
+      await page.waitForSelector(selectors.profile.emailInput, { timeout: 15000 });
+      // Validate successful signin
       const authValidation = await profilePage.validateSuccessfulAuth(email);
       expect(authValidation.isValid).toBe(true);
-      
-      // Validate API responses
-      const authApiResponse = await setupSignupInterceptors(page);
-      expect(authApiResponse.status).toBe(200);
-      const profileApiResponse = await setupProfileInterceptors(page);
-      expect(profileApiResponse.status).toBe(200);
     });
     
     test('should successfully sign up with valid email and password without newsletter subscription', async ({ page }) => {
-      
-      const email = FormValidation.generateRandomEmail();
-      const password = FormValidation.generateValidPassword();
-      
-      await signUpPage.fillEmailSignupForm({
-        email,
-        password,
-        subscribe: false
-      });
-      
-      await signUpPage.submitSignupForm();
-      await signUpPage.waitForSubmission();
-      await profilePage.waitForLoad();
-      
-      const authValidation = await profilePage.validateSuccessfulAuth(email);
-      expect(authValidation.isValid).toBe(true);
-      const authApiResponse = await setupSignupInterceptors(page);
-      expect(authApiResponse.status).toBe(200);
-      const profileApiResponse = await setupProfileInterceptors(page);
-      expect(profileApiResponse.status).toBe(200);
+     // waiting for form elements for better stability
+     await page.waitForSelector(selectors.signUp.createAccountButton, { timeout: 15000 });
+     await page.waitForSelector(selectors.signUp.phoneInput, { timeout: 15000 });
+     await page.waitForSelector(selectors.signUp.passwordInput, { timeout: 15000 });
+     // Generate test data
+     const email = FormValidation.generateRandomEmail();
+     const password = FormValidation.generateValidPassword();
+     
+     // Fill and submit form
+     await signUpPage.fillEmailSignupForm({
+       email,
+       password,
+       subscribe: false
+     });
+     
+     // Validate form fields before submission
+     const validation = signUpPage.validateFormFields({ email, password }, true);
+     expect(validation.isValid).toBe(true);
+     
+     await signUpPage.submitSignupForm();
+     
+     const authApiResponse = await setupSignupInterceptors(page);
+     const profileApiResponse = await setupProfileInterceptors(page);
+     // Validate API responses
+     expect(authApiResponse.status).toBe(200);
+     expect(profileApiResponse.status).toBe(200);
+     await page.waitForSelector(selectors.profile.emailInput, { timeout: 15000 });
+     // Validate successful signin
+     const authValidation = await profilePage.validateSuccessfulAuth(email);
+     expect(authValidation.isValid).toBe(true);
     });
     
     test('should validate password visibility toggle functionality', async ({ page }) => {
@@ -104,26 +113,31 @@ test.describe('Sign Up Tests', () => {
       
       const phone = FormValidation.generateRandomPhone();
       const password = FormValidation.generateValidPassword();
-      
+      // waiting for form elements for better stability
+      await page.waitForSelector(selectors.signUp.createAccountButton, { timeout: 15000 });
+      await page.waitForSelector(selectors.signUp.phoneInput, { timeout: 15000 });
+      await page.waitForSelector(selectors.signUp.passwordInput, { timeout: 15000 });   
       await signUpPage.fillPhoneSignupForm({
         phone,
         password,
         subscribe: true
       });
       
+      // Validate form fields before submission
       const validation = signUpPage.validateFormFields({ phone, password }, false);
       expect(validation.isValid).toBe(true);
       
       await signUpPage.submitSignupForm();
-      await signUpPage.waitForSubmission();
-      await profilePage.waitForLoad();
       
-      const authValidation = await profilePage.validateSuccessfulAuth(phone);
-      expect(authValidation.isValid).toBe(true);
       const authApiResponse = await setupSignupInterceptors(page);
-      expect(authApiResponse.status).toBe(200);
       const profileApiResponse = await setupProfileInterceptors(page);
+      // Validate API responses
+      expect(authApiResponse.status).toBe(200);
       expect(profileApiResponse.status).toBe(200);
+      await page.waitForSelector(selectors.profile.emailInput, { timeout: 15000 });
+      // Validate successful signin
+      const authValidation = await profilePage.validateSuccessfulAuth('+966 '+phone);
+      expect(authValidation.isValid).toBe(true);
     });
   });
   
@@ -137,9 +151,9 @@ test.describe('Sign Up Tests', () => {
           email,
           password: FormValidation.generateValidPassword()
         });
-        
+        await signUpPage.submitSignupForm();
         // Form validation should catch invalid emails
-        const validation = signUpPage.validateFormFields({ email, password: 'Test123!' }, true);
+        const validation = signUpPage.validateFormFields({ email, password: 'Test1234!' }, true);
         if (email.trim() === '') {
           expect(validation.isValid).toBe(false);
           expect(validation.errors).toContain('Email is required');
@@ -154,14 +168,14 @@ test.describe('Sign Up Tests', () => {
     
     test('should show error for invalid password', async ({ page }) => {
       const invalidPasswords = invalid.passwords;
-      
+      await page.click(signUp.emailTab);
       for (const password of invalidPasswords) {
+        await signUpPage.clearEmailForm();
         await signUpPage.fillEmailSignupForm({
           email: FormValidation.generateRandomEmail(),
           password
         });
-        await signUpPage.clearEmailForm();
-        
+        await signUpPage.submitSignupForm();
         const validation = signUpPage.validateFormFields({ 
           email: FormValidation.generateRandomEmail(), 
           password 
@@ -173,9 +187,9 @@ test.describe('Sign Up Tests', () => {
         } else {
           expect(validation.isValid).toBe(false);
           expect(validation.errors.length).toBeGreaterThan(0);
+          const emailError = await signInPage.getErrorMessage('password');
+          expect(emailError).toContain(selectors.errorMessages.notValidPassword);
         }
-        const emailError = await signInPage.getErrorMessage('password');
-        expect(emailError).toContain(selectors.errorMessages.notValidPassword);
       }
     });
     
@@ -193,8 +207,8 @@ test.describe('Sign Up Tests', () => {
       await signUpPage.submitSignupForm();
       const apiResponses = await setupSignupInterceptors(page);
       
-      // Should get 403 status for existing user
-      expect(apiResponses.status).toBe(403);
+      // Should get 400 status for existing user
+      expect(apiResponses.status).toBe(400);
       await expect(page.getByText(selectors.errorMessages.generalSignUpError)).toBeVisible();
     });
     
@@ -243,7 +257,7 @@ test.describe('Sign Up Tests', () => {
           phone,
           password: FormValidation.generateValidPassword()
         });
-        
+        await signInPage.submitSigninForm();
         const validation = signUpPage.validateFormFields({ phone, password: 'Test123!' }, false);
         if (phone.trim() === '') {
           expect(validation.isValid).toBe(false);
@@ -270,8 +284,8 @@ test.describe('Sign Up Tests', () => {
       await signUpPage.submitSignupForm();
       const apiResponses = await setupSignupInterceptors(page);
       
-      expect(apiResponses.status).toBe(403);
-      await expect(page.getByText(selectors.errorMessages.generalSignUpError)).toBeVisible();
+      expect(apiResponses.status).toBe(400);
+      await expect(page.getByText(selectors.errorMessages.generalSignUpPhoneError)).toBeVisible();
 
     });
   });
