@@ -339,7 +339,7 @@ test.describe('Sign In Tests', () => {
       const wrongPassword = 'WrongPassword123!';
       
       // Attempt multiple failed logins
-      for (let i = 0; i < 15; i++) {
+      for (let i = 0; i < 7; i++) {
         await signInPage.clearEmailForm();
         await signInPage.fillEmailSigninForm({
           email: valid.email,

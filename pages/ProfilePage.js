@@ -84,7 +84,7 @@ class ProfilePage {
   async clickLogout() {
     const button = this.page.locator(selectors.logoutButton);
     if (await button.isVisible()) {
-      await this.page.waitForTimeout(5000);
+      await this.page.waitForTimeout(2000);
       await button.click();
     }
   }

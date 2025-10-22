@@ -60,7 +60,6 @@ test.describe('Complete Authentication Flow', () => {
     expect(page.url()).toContain('/signin');
     
     // Step 3: Sign in with same credentials
-    await signInPage.navigate();
     await signInPage.fillEmailSigninForm({
       email,
       password
@@ -124,7 +123,6 @@ test.describe('Complete Authentication Flow', () => {
     expect(page.url()).toContain('/signin');
     
     // Step 3: Sign in with same credentials
-    await signInPage.navigate();
     await signInPage.fillPhoneSigninForm({
       phone,
       password
